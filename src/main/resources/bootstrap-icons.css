@@ -1,0 +1,71 @@
+.bi {
+    -fx-font-family: 'bootstrap-icons';
+    -fx-font-style: normal;
+    -fx-font-weight: normal;
+    -fx-font-variant: normal;
+    -fx-text-transform: none;
+    -fx-line-height: 1;
+    -fx-vertical-align: -0.125em;
+}
+
+.bi-plus::before { content: "\f481"; }
+.bi-trash::before { content: "\f5d1"; }
+.bi-pencil::before { content: "\f47c"; }
+.bi-x::before { content: "\f5d0"; }
+.bi-dash::before { content: "\f2eb"; }
+.bi-square::before { content: "\f57a"; }
+.bi-window::before { content: "\f659"; }
+.bi-person::before { content: "\f4da"; }
+.bi-calendar::before { content: "\f1ee"; }
+.bi-clock::before { content: "\f27b"; }
+.bi-check::before { content: "\f26e"; }
+.bi-arrow-clockwise::before { content: "\f06f"; }
+.bi-gear::before { content: "\f3f7"; }
+.bi-house::before { content: "\f430"; }
+.bi-list-ul::before { content: "\f456"; }
+.bi-graph-up::before { content: "\f3e7"; }
+.bi-heart::before { content: "\f408"; }
+.bi-star::before { content: "\f585"; }
+.bi-bookmark::before { content: "\f19b"; }
+.bi-tag::before { content: "\f5c7"; }
+.bi-folder::before { content: "\f3af"; }
+.bi-file-text::before { content: "\f398"; }
+.bi-image::before { content: "\f414"; }
+.bi-video::before { content: "\f5fb"; }
+.bi-music::before { content: "\f477"; }
+.bi-code::before { content: "\f28a"; }
+.bi-terminal::before { content: "\f5ce"; }
+.bi-database::before { content: "\f2db"; }
+.bi-server::before { content: "\f539"; }
+.bi-cloud::before { content: "\f2c2"; }
+.bi-wifi::before { content: "\f5fe"; }
+.bi-bluetooth::before { content: "\f1ac"; }
+.bi-battery::before { content: "\f177"; }
+.bi-cpu::before { content: "\f2db"; }
+.bi-memory::before { content: "\f474"; }
+.bi-hdd::before { content: "\f3f7"; }
+.bi-usb::before { content: "\f5f7"; }
+.bi-mouse::before { content: "\f480"; }
+.bi-keyboard::before { content: "\f42c"; }
+.bi-monitor::before { content: "\f47a"; }
+.bi-phone::before { content: "\f4bc"; }
+.bi-tablet::before { content: "\f536"; }
+.bi-laptop::before { content: "\f452"; }
+.bi-pc::before { content: "\f4b8"; }
+.bi-printer::before { content: "\f4d1"; }
+.bi-scanner::before { content: "\f51a"; }
+.bi-camera::before { content: "\f20e"; }
+.bi-mic::before { content: "\f478"; }
+.bi-speaker::before { content: "\f556"; }
+.bi-headphones::before { content: "\f400"; }
+.bi-gamepad::before { content: "\f3b0"; }
+.bi-joystick::before { content: "\f422"; }
+.bi-controller::before { content: "\f2a1"; }
+.bi-tv::before { content: "\f5d5"; }
+.bi-display::before { content: "\f30b"; }
+.bi-projector::before { content: "\f4d4"; }
+.bi-box-arrow-right::before { content: "\f2f5"; }
+.bi-arrow-left::before { content: "\f071"; }
+.bi-rulers::before { content: "\f531"; }
+.bi-speedometer2::before { content: "\f575"; }
+.bi-people::before { content: "\f4d2"; }
