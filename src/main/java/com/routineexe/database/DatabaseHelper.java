@@ -1,5 +1,6 @@
 package com.routineexe.database;
 
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,9 +49,8 @@ public final class DatabaseHelper {
         boolean empty = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + TABLE_CATEGORIES).getInt(1) == 0;
         if (!empty) return;
 
-        Path dataDir = Paths.get(System.getProperty("user.dir"), "data");
-        Path seedPath = dataDir.resolve("seed.sql");
-        if (!Files.exists(seedPath)) return;
+        Path seedPath = findSeedSql();
+        if (seedPath == null) return;
 
         String sql = Files.readString(seedPath, StandardCharsets.UTF_8);
         conn.setAutoCommit(false);
@@ -68,6 +68,49 @@ public final class DatabaseHelper {
         } finally {
             conn.setAutoCommit(true);
         }
+    }
+
+    private static Path findSeedSql() {
+        Path dataDir = Paths.get(System.getProperty("user.dir"), "data");
+        Path seedPath = dataDir.resolve("seed.sql");
+        if (Files.exists(seedPath)) return seedPath;
+
+        String appImage = System.getenv("APPIMAGE");
+        if (appImage != null && !appImage.isEmpty()) {
+            Path mountRoot = Paths.get(appImage).getParent();
+            if (mountRoot != null) {
+                seedPath = mountRoot.resolve("data/seed.sql");
+                if (Files.exists(seedPath)) return seedPath;
+            }
+        }
+
+        String javaHome = System.getProperty("java.home");
+        if (javaHome != null) {
+            Path homePath = Paths.get(javaHome);
+            for (int i = 0; i < 5; i++) {
+                seedPath = homePath.resolve("data/seed.sql");
+                if (Files.exists(seedPath)) return seedPath;
+                Path parent = homePath.getParent();
+                if (parent == null) break;
+                homePath = parent;
+            }
+        }
+
+        for (String dirStr : new String[]{"/tmp", System.getProperty("java.io.tmpdir")}) {
+            try {
+                Path tmp = Paths.get(dirStr);
+                if (Files.isDirectory(tmp)) {
+                    try (DirectoryStream<Path> stream = Files.newDirectoryStream(tmp, ".mount_*")) {
+                        for (Path mount : stream) {
+                            seedPath = mount.resolve("data/seed.sql");
+                            if (Files.exists(seedPath)) return seedPath;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
     }
 
     private static void initializeSchema(Connection conn) throws Exception {
