@@ -1,35 +1,35 @@
 # RoutinEXE
 
-**RoutinEXE** — Aplicación de gestión de rutinas de ejercicio multiplataforma y offline.
+**RoutinEXE** — A cross-platform offline fitness routine management application.
 
-## Descripción
+## Description
 
-RoutinEXE es una aplicación de escritorio JavaFX que permite gestionar rutinas de ejercicios, sesiones de entrenamiento, categorías de ejercicios y usuarios. Funciona completamente offline con una base de datos SQLite local.
+RoutinEXE is a JavaFX desktop application that allows managing exercise routines, training sessions, exercise categories, and users. It works completely offline with a local SQLite database.
 
-## Funcionalidades
+## Features
 
-- **Usuarios**: Crear, editar y eliminar usuarios (nombre obligatorio, edad, altura y peso opcionales).
-- **Categorías**: Gestionar categorías de ejercicios (ej. Cardio, Fuerza, Flexibilidad...).
-- **Ejercicios**: CRUD de ejercicios asignados a categorías, con descripción y marca de tiempo.
-- **Rutinas**: Crear rutinas por usuario con días de la semana, fecha inicio/fin, y ejercicios asignados (series, repeticiones).
-- **Sesiones**: Registro de sesiones de entrenamiento por fecha, con seguimiento de ejercicios completados (done/undo) y marca de día completado.
-- **Dashboard**: Vista resumida por usuario con estadísticas y navegación a todas las secciones.
-- **Calendario**: Vista de calendario para gestionar sesiones por día y mes.
+- **Users**: Create, edit, and delete users (username required, age/height/weight optional).
+- **Categories**: Manage exercise categories (e.g., Cardio, Strength, Flexibility).
+- **Exercises**: CRUD for exercises assigned to categories, with description and time-based flag.
+- **Routines**: Create routines per user with days of the week, start/end dates, and assigned exercises (sets, reps).
+- **Sessions**: Record training sessions by date, with exercise tracking (done/undo) and day completion status.
+- **Dashboard**: Overview per user with statistics and navigation to all sections.
+- **Calendar**: Calendar view for managing sessions by day and month.
 
-## Arquitectura
+## Architecture
 
 ```
 src/main/java/com/routineexe/
-├── view/           # Interfaces de usuario (JavaFX)
-│   ├── Main.java              # Punto de entrada principal
-│   ├── DashboardLayout.java   # Layout con sidebar y dashboard
+├── view/           # UI (JavaFX)
+│   ├── Main.java              # Main entry point
+│   ├── DashboardLayout.java   # Sidebar + dashboard layout
 │   ├── DashboardView.java
 │   ├── users/                 # UserView, UserListView, UserFormDialog...
 │   ├── categories/            # CategoryView, CategoryListView...
 │   ├── exercises/             # ExerciseView, ExerciseListView...
 │   ├── routines/              # RoutineView, RoutineListView...
 │   └── sessions/              # SessionView, SessionListView...
-├── model/          # Modelos de datos
+├── model/          # Data models
 │   ├── User.java
 │   ├── Category.java
 │   ├── Exercise.java
@@ -37,8 +37,8 @@ src/main/java/com/routineexe/
 │   ├── RoutineExercise.java
 │   ├── Session.java
 │   └── SessionExercise.java
-├── database/       # Acceso a datos (DAO + helper)
-│   ├── DatabaseHelper.java    # Conexión SQLite + esquema
+├── database/       # Data access (DAO + helper)
+│   ├── DatabaseHelper.java    # SQLite connection + schema
 │   ├── UserDAO.java
 │   ├── CategoryDAO.java
 │   ├── ExerciseDAO.java
@@ -46,47 +46,47 @@ src/main/java/com/routineexe/
 │   ├── RoutineExerciseDAO.java
 │   ├── SessionDAO.java
 │   └── SessionExerciseDAO.java
-└── util/           # Utilidades
+└── util/           # Utilities
     └── FontAwesomeIcons.java
 
 src/main/resources/
-├── styles.css              # Estilos CSS (tema oscuro)
-├── bootstrap-icons.css     # Iconos Bootstrap
+├── styles.css              # Styles (dark theme)
+├── bootstrap-icons.css     # Bootstrap icons
 └── fonts/                  # Font Awesome + Bootstrap Icons (.ttf/.woff2)
 
 data/
-└── routin-exe.db           # Base de datos SQLite (generada automáticamente)
+└── routin-exe.db           # SQLite database (auto-created)
 ```
 
-## Tecnologías
+## Technologies
 
-| Tecnología | Versión |
+| Technology | Version |
 |------------|---------|
 | Java | 25 |
 | JavaFX | 25.0.4 |
 | SQLite JDBC | 3.49.1.0 |
 | Build | Gradle + Maven |
 
-## Requisitos previos
+## Prerequisites
 
-- **JDK 25** o superior
-- Linux (la aplicación se ejecuta en escritorio); también soporta Windows y macOS (perfiles en pom.xml)
+- **JDK 25** or higher
+- Linux (desktop app); also supports Windows and macOS (profiles in pom.xml)
 
-## Construcción
+## Building
 
-### Con Gradle
+### With Gradle
 ```bash
 ./gradlew build
 ```
 
-### Con Maven
+### With Maven
 ```bash
 mvn clean package
 ```
 
-## Ejecución
+## Running
 
-### AppImage (recomendado para Linux)
+### AppImage (recommended for Linux)
 ```bash
 ./dist/RoutinEXE-x86_64.AppImage
 ```
@@ -96,43 +96,43 @@ mvn clean package
 java -jar dist/routin-exe.jar
 ```
 
-### Desde IDE
-Ejecutar la clase `com.routineexe.view.Main`.
+### From IDE
+Run the `com.routineexe.view.Main` class.
 
-## Base de datos
+## Database
 
-La base de datos SQLite se crea automáticamente en `data/routin-exe.db` al primer arranque. Contiene las siguientes tablas:
+The SQLite database is automatically created at `data/routin-exe.db` on first launch. It contains the following tables:
 
-| Tabla | Descripción |
+| Table | Description |
 |-------|-------------|
-| users | Usuarios (id, username, age, height, weight) |
-| categories | Categorías de ejercicios |
-| exercises | Ejercicios (nombre, categoría, descripción, time_based) |
-| routines | Rutinas (usuario, nombre, fecha inicio/fin) |
-| routine_days | Días de la semana asignados a rutinas |
-| routine_exercises | Ejercicios asignados a rutinas (día, series, repeticiones) |
-| sessions | Sesiones de entrenamiento (rutina, fecha, día, completado) |
-| session_exercises | Ejercicios en sesiones (series, repeticiones, peso, hecho) |
+| users | Users (id, username, age, height, weight) |
+| categories | Exercise categories |
+| exercises | Exercises (name, category, description, time_based) |
+| routines | Routines (user, name, start/end date) |
+| routine_days | Days of the week assigned to routines |
+| routine_exercises | Exercises assigned to routines (day, sets, reps) |
+| sessions | Training sessions (routine, date, day, completed) |
+| session_exercises | Exercises in sessions (sets, reps, weight, done) |
 
-## Estructura de distribución
+## Distribution Structure
 
 ```
 dist/
-├── RoutinEXE-x86_64.AppImage    # Ejecutable Linux (83MB)
-└── routin-exe.jar               # JAR ejecutable
+├── RoutinEXE-x86_64.AppImage    # Linux executable (83MB)
+└── routin-exe.jar                 # Executable JAR
 
-AppDir/                           # Estructura para AppImage
+AppDir/                           # AppImage structure
 ├── AppRun
 ├── RoutinEXE.desktop
 ├── RoutinEXE.png
 └── usr/
     ├── lib/
-    │   ├── runtime/             # JRE personalizado (jlink)
+    │   ├── runtime/             # Custom JRE (jlink)
     │   ├── app/routin-exe.jar
-    │   ├── javafx/              # Módulos JavaFX
+    │   ├── javafx/              # JavaFX modules
     │   └── sqlite-jdbc-*.jar
 ```
 
-## Licencia
+## License
 
-Proyecto privado de desarrollo.
+Private development project.

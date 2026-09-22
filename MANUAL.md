@@ -1,170 +1,170 @@
-# Manual de Usuario — RoutinEXE
+# User Manual — RoutinEXE
 
-## Índice
-1. Introducción
-2. Primera ejecución
-3. Gestión de usuarios
-4. Gestión de categorías
-5. Gestión de ejercicios
-6. Gestión de rutinas
-7. Sesiones de entrenamiento
+## Table of Contents
+1. Introduction
+2. First Run
+3. User Management
+4. Category Management
+5. Exercise Management
+6. Routine Management
+7. Training Sessions
 8. Dashboard
-9. Calendario
-10. Resolución de problemas
+9. Calendar
+10. Troubleshooting
 
 ---
 
-## 1. Introducción
+## 1. Introduction
 
-RoutinEXE es una aplicación de escritorio para gestionar rutinas de ejercicio de forma offline. Permite crear y organizar usuarios, categorías de ejercicios, rutinas personalizadas y registrar sesiones de entrenamiento con seguimiento detallado.
+RoutinEXE is a desktop application for managing exercise routines offline. It allows creating and organizing users, exercise categories, custom routines, and recording training sessions with detailed tracking.
 
-## 2. Primera ejecución
+## 2. First Run
 
-Al abrir RoutinEXE por primera vez:
-- Se crea automáticamente la base de datos SQLite en la carpeta `data/` (dentro del directorio de la aplicación o del directorio de trabajo actual).
-- Aparece la pantalla de **gestión de usuarios**.
-- No se requiere configuración adicional.
+When opening RoutinEXE for the first time:
+- The SQLite database is automatically created in the `data/` folder (inside the application directory or current working directory).
+- The user management screen appears.
+- No additional configuration is required.
 
-**Requisito**: JDK 25+ instalado en el sistema.
+**Requirement**: JDK 25+ installed on the system.
 
-## 3. Gestión de usuarios
+## 3. User Management
 
-Desde la pantalla inicial se pueden gestionar los usuarios:
+From the initial screen, users can be managed:
 
-### Crear usuario
-1. Haz clic en el botón **Crear** (botón azul/primario).
-2. Rellena el campo **nombre de usuario** (obligatorio).
-3. Opcionalmente, indica **edad**, **altura** y **peso**.
-4. Haz clic en **Guardar**.
+### Create User
+1. Click the **Create** button (primary/blue button).
+2. Fill in the **username** field (required).
+3. Optionally, provide **age**, **height**, and **weight**.
+4. Click **Save**.
 
-### Editar usuario
-1. Selecciona un usuario en la tabla.
-2. Haz clic en el botón **editar** (icono de lápiz) en la fila.
-3. Modifica los campos y guarda.
+### Edit User
+1. Select a user from the table.
+2. Click the **edit** (pencil icon) button on the row.
+3. Modify the fields and save.
 
-### Eliminar usuario
-1. Selecciona un usuario en la tabla.
-2. Haz clic en el botón **eliminar** (icono de papelera).
-3. Confirma la eliminación en el diálogo.
+### Delete User
+1. Select a user from the table.
+2. Click the **delete** (trash icon) button.
+3. Confirm the deletion in the dialog.
 
-> **Nota**: Al seleccionar un usuario, se accede a su dashboard con todas las funcionalidades.
+> **Note**: Selecting a user navigates to their dashboard with all features.
 
-## 4. Gestión de categorías
+## 4. Category Management
 
-Las categorías permiten agrupar ejercicios (ej. Cardio, Fuerza, Flexibilidad).
+Categories group exercises (e.g., Cardio, Strength, Flexibility).
 
-### Crear categoría
-1. En la vista de categorías, haz clic en **Crear**.
-2. Introduce el **nombre** de la categoría.
-3. Guarda.
+### Create Category
+1. In the categories view, click **Create**.
+2. Enter the **name** of the category.
+3. Save.
 
-### Editar/Eliminar
-- Usa los botones de acción (lápiz / papelera) en la tabla.
+### Edit/Delete
+- Use the action buttons (pencil / trash) in the table.
 
-## 5. Gestión de ejercicios
+## 5. Exercise Management
 
-Los ejercicios pertenecen a una categoría y pueden tener descripción y marca de tiempo.
+Exercises belong to a category and can have a description and time-based flag.
 
-### Crear ejercicio
-1. En la vista de ejercicios, haz clic en **Crear**.
-2. Rellena:
-   - **Nombre** (obligatorio)
-   - **Categoría** (seleccionar de la lista)
-   - **Descripción** (opcional)
-   - **Basado en tiempo** (checkbox, si el ejercicio se mide por duración)
-3. Guarda.
+### Create Exercise
+1. In the exercises view, click **Create**.
+2. Fill in:
+   - **Name** (required)
+   - **Category** (select from list)
+   - **Description** (optional)
+   - **Time Based** (checkbox, if the exercise is measured by duration)
+3. Save.
 
-### Editar/Eliminar
-- Usa los botones de acción en la tabla.
+### Edit/Delete
+- Use the action buttons in the table.
 
-## 6. Gestión de rutinas
+## 6. Routine Management
 
-Las rutinas se asocian a un usuario y contienen ejercicios programados por días de la semana.
+Routines are associated with a user and contain exercises scheduled by days of the week.
 
-### Crear rutina
-1. En la vista de rutinas, haz clic en **Crear**.
-2. Selecciona el **usuario** al que pertenece la rutina.
-3. Introduce el **nombre** de la rutina.
-4. Establece las **fechas de inicio y fin** (opcionales).
-5. Selecciona los **días de la semana** en los que se entrena.
-6. Asigna ejercicios a cada día con sus **series** y **repeticiones**:
-   - Añade ejercicios desde la lista.
-   - Para cada ejercicio asignado, indica series y repeticiones.
-7. Guarda.
+### Create Routine
+1. In the routines view, click **Create**.
+2. Select the **user** the routine belongs to.
+3. Enter the **name** of the routine.
+4. Set **start and end dates** (optional).
+5. Select the **days of the week** to train.
+6. Assign exercises to each day with **sets** and **reps**:
+   - Add exercises from the list.
+   - For each assigned exercise, specify sets and reps.
+7. Save.
 
-### Editar/Eliminar
-- Usa los botones de acción en la tabla.
+### Edit/Delete
+- Use the action buttons in the table.
 
-## 7. Sesiones de entrenamiento
+## 7. Training Sessions
 
-Las sesiones registran las prácticas realizadas, con seguimiento de cada ejercicio.
+Sessions record training sessions with per-exercise tracking.
 
-### Ver sesiones
-1. Haz clic en la pestaña **Sesiones** del sidebar del dashboard.
-2. Usa el **calendario** para navegar por meses.
-3. Haz clic en una fecha para abrir una sesión.
+### View Sessions
+1. Click the **Sessions** tab in the dashboard sidebar.
+2. Use the **calendar** to navigate by month.
+3. Click a date to open a session.
 
-### Crear sesión
-1. Selecciona una fecha en el calendario o haz clic en **Iniciar sesión** para la fecha actual.
-2. Selecciona la rutina asociada.
-3. La vista muestra los ejercicios programados para ese día.
-4. Para cada ejercicio, registra:
-   - **Series**
-   - **Repeticiones**
-   - **Peso** (opcional)
-   - **Hecho** (checkbox para marcar como completado)
-5. Guarda.
+### Create Session
+1. Select a date on the calendar or click **Start Session** for today's date.
+2. Select the associated routine.
+3. The view shows the exercises scheduled for that day.
+4. For each exercise, record:
+   - **Sets**
+   - **Reps**
+   - **Weight** (optional)
+   - **Done** (checkbox to mark as completed)
+5. Save.
 
-### Marcar/desmarcar como completado
-- Usa el checkbox **Done** en cada ejercicio de la sesión para marcar o desmarcar su completado.
-- Puedes marcar el día completo como hecho con el interruptor (switch) de **Session Day Done**.
+### Mark/Unmark as Completed
+- Use the **Done** checkbox on each exercise in the session to mark or unmark completion.
+- The entire day can be marked as done using the **Session Day Done** switch.
 
-> **Importante**: Las sesiones de días pasados son de solo lectura. Solo se pueden editar las sesiones del día actual.
+> **Important**: Sessions on past dates are read-only. Only sessions for the current day can be edited.
 
 ## 8. Dashboard
 
-Al seleccionar un usuario desde la pantalla principal, se accede al dashboard:
+Selecting a user from the main screen navigates to the dashboard:
 
-- **Barra lateral (sidebar)**: Navegación a Usuarios, Categorías, Ejercicios, Rutinas y Sesiones.
-- **Estadísticas**: Tarjetas con información resumida del usuario.
-- **Botón de cerrar sesión**: Volver a la pantalla de selección de usuario.
+- **Sidebar**: Navigation to Users, Categories, Exercises, Routines, and Sessions.
+- **Statistics**: Cards with summarized user information.
+- **Logout button**: Return to the user selection screen.
 
-### Navegación
-- Haz clic en los botones de la barra lateral para ir a cada sección.
-- Las vistas del dashboard están pre-filtradas por el usuario seleccionado.
+### Navigation
+- Click the sidebar buttons to navigate to each section.
+- Dashboard views are pre-filtered by the selected user.
 
-## 9. Calendario
+## 9. Calendar
 
-El calendario en la vista de sesiones permite:
+The calendar in the sessions view allows:
 
-- **Navegación**: Usa las flechas para ir al mes anterior/siguiente.
-- **Crear sesión**: Haz clic en una celda de fecha disponible para crear una sesión.
-- **Reset**: Al seleccionar una rutina, el calendario se resetea al mes actual.
+- **Navigation**: Use arrows to go to the previous/next month.
+- **Create Session**: Click an available date cell to create a session.
+- **Reset**: Selecting a routine resets the calendar to the current month.
 
-## 10. Resolución de problemas
+## 10. Troubleshooting
 
-### La aplicación no arranca
-- Asegúrate de que tienes **JDK 25** o superior instalado.
-- Verifica que `java -version` devuelve la versión correcta.
+### Application Won't Launch
+- Make sure **JDK 25** or higher is installed.
+- Verify that `java -version` returns the correct version.
 
-### Error de base de datos
-- El archivo `data/routin-exe.db` se crea automáticamente. No lo elimines manualmente.
-- Si hay corrupción, realiza una copia de seguridad y elimina el archivo para que se cree uno nuevo.
+### Database Error
+- The file `data/routin-exe.db` is created automatically. Do not delete it manually.
+- If corruption occurs, back up and delete the file to create a new one.
 
-### La AppImage no ejecuta
-- Asegúrate de que el archivo tiene permisos de ejecución:
+### AppImage Won't Execute
+- Ensure the file has execute permissions:
   ```bash
   chmod +x RoutinEXE-x86_64.AppImage
   ```
-- Verifica que tu sistema sea x86_64 (64-bit).
+- Verify your system is x86_64 (64-bit).
 
-### No se muestran datos en el dashboard
-- Asegúrate de que has creado al menos un usuario y una rutina.
-- El dashboard solo muestra datos asociados al usuario seleccionado.
+### Dashboard Shows No Data
+- Make sure you have created at least one user and one routine.
+- The dashboard only shows data associated with the selected user.
 
-### Advertencias en la consola
-- Las advertencias sobre "restricted method" y "native access" son normales en Java 25 y no afectan el funcionamiento.
-- "xapp-gtk3-module" es un módulo GTK opcional no esencial.
+### Console Warnings
+- Warnings about "restricted method" and "native access" are normal on Java 25 and do not affect functionality.
+- "xapp-gtk3-module" is an optional GTK module, not essential.
 
 ---
 
