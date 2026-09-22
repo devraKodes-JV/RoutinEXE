@@ -114,23 +114,33 @@ The SQLite database is automatically created at `data/routin-exe.db` on first la
 | sessions | Training sessions (routine, date, day, completed) |
 | session_exercises | Exercises in sessions (sets, reps, weight, done) |
 
+### Seeding the Database
+
+A comprehensive seed file is available at `data/seed.sql` containing 6 categories and 150 exercises (25 per category), with a mix of equipment-based and bodyweight exercises:
+
+| Category | Exercises |
+|----------|-----------|
+| Cardio & Endurance | 25 |
+| Upper Body Strength | 25 |
+| Lower Body Strength | 25 |
+| Full Body Strength | 25 |
+| Core & Abs | 25 |
+| Flexibility & Mobility | 25 |
+
+To load the seed, run the SQL file against the database after the schema has been initialized:
+
+```bash
+sqlite3 data/routin-exe.db < data/seed.sql
+```
+
+The seed resets all data before inserting (DELETE + INSERT), so it is safe to re-run.
+
 ## Distribution Structure
 
 ```
 dist/
-├── RoutinEXE-x86_64.AppImage    # Linux executable (83MB)
+├── RoutinEXE-x86_64.AppImage    # Linux executable
 └── routin-exe.jar                 # Executable JAR
-
-AppDir/                           # AppImage structure
-├── AppRun
-├── RoutinEXE.desktop
-├── RoutinEXE.png
-└── usr/
-    ├── lib/
-    │   ├── runtime/             # Custom JRE (jlink)
-    │   ├── app/routin-exe.jar
-    │   ├── javafx/              # JavaFX modules
-    │   └── sqlite-jdbc-*.jar
 ```
 
 ## License
