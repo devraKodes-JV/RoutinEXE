@@ -1,0 +1,34 @@
+# Dependencias y archivos ignorados por Git
+
+## Dependencias / build
+.gradle/
+build/
+target/
+dependency-reduced-pom.xml
+
+## IDE
+.vscode/
+.idea/
+*.iml
+
+## Base de datos y datos
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+
+## Distribución
+dist/
+AppDir/
+
+## Sistema operativo
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+
+## Archivos temporales
+*.tmp
+*.bak
+*~
