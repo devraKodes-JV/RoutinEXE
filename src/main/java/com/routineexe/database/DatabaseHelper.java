@@ -3,6 +3,7 @@ package com.routineexe.database;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -38,11 +39,38 @@ public final class DatabaseHelper {
 
             connection = DriverManager.getConnection(url);
             initializeSchema(connection);
+            seedDatabase(connection);
         }
         return connection;
     }
 
-private static void initializeSchema(Connection conn) throws Exception {
+    private static void seedDatabase(Connection conn) throws Exception {
+        boolean empty = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + TABLE_CATEGORIES).getInt(1) == 0;
+        if (!empty) return;
+
+        Path dataDir = Paths.get(System.getProperty("user.dir"), "data");
+        Path seedPath = dataDir.resolve("seed.sql");
+        if (!Files.exists(seedPath)) return;
+
+        String sql = Files.readString(seedPath, StandardCharsets.UTF_8);
+        conn.setAutoCommit(false);
+        try (Statement stmt = conn.createStatement()) {
+            for (String batch : sql.split(";")) {
+                String trimmed = batch.trim();
+                if (!trimmed.isEmpty()) {
+                    stmt.execute(trimmed);
+                }
+            }
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+        }
+    }
+
+    private static void initializeSchema(Connection conn) throws Exception {
         String usersSql = "CREATE TABLE IF NOT EXISTS " + TABLE_USERS + " ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "username TEXT NOT NULL UNIQUE, "

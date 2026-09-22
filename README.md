@@ -127,7 +127,9 @@ A comprehensive seed file is available at `data/seed.sql` containing 6 categorie
 | Core & Abs | 25 |
 | Flexibility & Mobility | 25 |
 
-To load the seed, run the SQL file against the database after the schema has been initialized:
+The seed loads **automatically** on first app launch if the database is empty (categories table has no data). Just place `data/seed.sql` alongside the database and start the app.
+
+To manually load or reset the seed:
 
 ```bash
 sqlite3 data/routin-exe.db < data/seed.sql
