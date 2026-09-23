@@ -1,0 +1,242 @@
+name: Cross-Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '25'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build JAR
+        run: mvn clean package -Plinux
+
+      - name: Collect native dependencies
+        run: |
+          mkdir -p jpackage-deps
+
+          CLASSIFIER=$(
+            case "${{ matrix.os }}" in
+              ubuntu-latest) echo "linux" ;;
+              windows-latest) echo "win" ;;
+              macos-latest) echo "mac" ;;
+            esac
+          )
+
+          echo "Classifier: $CLASSIFIER"
+
+          # JavaFX jars
+          for mod in base controls graphics media; do
+            JAR=$(find ~/.m2/repository/org/openjfx -name "javafx-${mod}-25.0.4-${CLASSIFIER}.jar" ! -name "*sources*" ! -name "*javadoc*" | head -1)
+            if [ -z "$JAR" ]; then
+              echo "ERROR: JavaFX ${mod} jar not found for $CLASSIFIER"
+              exit 1
+            fi
+            cp "$JAR" jpackage-deps/
+            echo "Copied: $(basename $JAR)"
+          done
+
+          # SQLite JDBC
+          SQLITE_JAR=$(find ~/.m2/repository/org/xerial -name "sqlite-jdbc-*.jar" ! -name "*sources*" ! -name "*javadoc*" | head -1)
+          cp "$SQLITE_JAR" jpackage-deps/
+          echo "Copied: $(basename $SQLITE_JAR)"
+
+          ls -la jpackage-deps/
+
+      - name: Package - Linux (AppImage)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y appimage-tools
+
+          # Build jpackage app-image
+          jpackage \
+            --name RoutinEXE \
+            --app-version 1.0.0 \
+            --icon src/main/resources/routinexe.png \
+            --input dist \
+            --main-jar routin-exe.jar \
+            --main-class com.routineexe.view.Main \
+            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
+            --module-path jpackage-deps \
+            --class-path "sqlite-jdbc-3.49.1.0.jar" \
+            --type app-image \
+            --dest jpackage-out \
+            --java-options "-Xmx512m"
+
+          # Create AppDir with appimagetool
+          rm -rf AppDir
+          mkdir -p AppDir/data
+
+          # Copy app files
+          APPDIR_CONTENT=$(find jpackage-out/RoutinEXE -maxdepth 1 -type f)
+          APPIMAGE_LIB_DIR="AppDir/usr/lib"
+          mkdir -p "$APPIMAGE_LIB_DIR/app"
+          mkdir -p "$APPIMAGE_LIB_DIR/javafx"
+          mkdir -p "$APPIMAGE_LIB_DIR/runtime"
+
+          # Copy app jar
+          cp jpackage-out/RoutinEXE/routin-exe.jar "$APPIMAGE_LIB_DIR/app/"
+
+          # Copy JavaFX jars
+          for jar in jpackage-deps/javafx-*.jar; do
+            cp "$jar" "$APPIMAGE_LIB_DIR/javafx/"
+          done
+
+          # Copy SQLite jar
+          cp jpackage-deps/sqlite-jdbc-*.jar "$APPIMAGE_LIB_DIR/"
+
+          # Copy runtime from jpackage output
+          cp -r jpackage-out/RoutinEXE/runtime/* "$APPIMAGE_LIB_DIR/runtime/" 2>/dev/null || true
+
+          # Copy seed data
+          cp data/seed.sql data/personal_seed.sql AppDir/data/
+
+          # Create AppRun script
+          cat > AppDir/AppRun << 'APPRUN'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          JAVAFX_JARS=""
+          for jar in "$HERE/usr/lib/javafx"/*.jar; do
+            JAVAFX_JARS="$JAVAFX_JARS:$jar"
+          done
+          exec "$HERE/usr/lib/runtime/bin/java" \
+            --module-path "$HERE/usr/lib/javafx" \
+            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
+            -classpath "$HERE/usr/lib/app/routin-exe.jar:$HERE/usr/lib/sqlite-jdbc-*.jar${JAVAFX_JARS}" \
+            com.routineexe.view.Main "$@"
+          APPRUN
+          chmod +x AppDir/AppRun
+
+          # Create desktop file
+          cat > AppDir/RoutinEXE.desktop << 'DESKTOP'
+          [Desktop Entry]
+          Name=RoutinEXE
+          Exec=AppRun
+          Icon=routinexe
+          Type=Application
+          Categories=Education;
+          DESKTOP
+
+          # Copy icon
+          cp src/main/resources/routinexe.png AppDir/RoutinEXE.png
+          cp AppDir/RoutinEXE.png AppDir/routinexe.png
+
+          # Build AppImage
+          appimagetool AppDir dist/RoutinEXE-x86_64.AppImage
+
+      - name: Package - Windows (EXE)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          jpackage ^
+            --name RoutinEXE ^
+            --app-version 1.0.0 ^
+            --input dist ^
+            --main-jar routin-exe.jar ^
+            --main-class com.routineexe.view.Main ^
+            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media ^
+            --module-path jpackage-deps ^
+            --class-path "sqlite-jdbc-3.49.1.0.jar" ^
+            --type exe ^
+            --dest release-artifacts ^
+            --java-options "-Xmx512m" ^
+            --win-dir-chooser ^
+            --win-shortcut ^
+            --win-menu ^
+            --icon src\main\resources\routinexe.png
+
+      - name: Package - macOS (DMG)
+        if: matrix.os == 'macos-latest'
+        run: |
+          jpackage \
+            --name RoutinEXE \
+            --app-version 1.0.0 \
+            --input dist \
+            --main-jar routin-exe.jar \
+            --main-class com.routineexe.view.Main \
+            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
+            --module-path jpackage-deps \
+            --class-path "sqlite-jdbc-3.49.1.0.jar" \
+            --type dmg \
+            --dest release-artifacts \
+            --java-options "-Xmx512m" \
+            --icon src/main/resources/routinexe.png
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: routin-exe-jar
+          path: dist/routin-exe.jar
+
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: routin-exe-linux
+          path: |
+            dist/RoutinEXE-x86_64.AppImage
+
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: routin-exe-windows
+          path: |
+            release-artifacts/*
+
+      - name: Upload macOS artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: routin-exe-macos
+          path: |
+            release-artifacts/*
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: |
+            artifacts/routin-exe.jar
+            artifacts/RoutinEXE-x86_64.AppImage
+            artifacts/*.exe
+            artifacts/*.dmg
