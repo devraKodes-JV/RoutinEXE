@@ -144,6 +144,7 @@ public class Main extends Application {
         exerciseListView = new ExerciseListView(exercises);
         exerciseToolbar = new ExerciseToolbar();
         exerciseView = new ExerciseView(exercises, exerciseListView, exerciseToolbar);
+        exerciseView.setCategoryOptions(categories);
 
         routineListView = new RoutineListView(routines);
         routineToolbar = new RoutineToolbar();

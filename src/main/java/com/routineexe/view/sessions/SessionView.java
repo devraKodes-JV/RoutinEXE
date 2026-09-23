@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -117,7 +118,7 @@ public class SessionView extends VBox {
         GridPane calendarGrid = new GridPane();
         calendarGrid.setHgap(2);
         calendarGrid.setVgap(2);
-        calendarGrid.setAlignment(Pos.CENTER);
+        calendarGrid.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(calendarGrid, Priority.ALWAYS);
 
         // Day headers
@@ -125,8 +126,6 @@ public class SessionView extends VBox {
         for (int i = 0; i < 7; i++) {
             Label dayLabel = new Label(dayHeaders[i]);
             dayLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #808090; -fx-padding: 8px; -fx-alignment: center;");
-            dayLabel.setMinWidth(50);
-            dayLabel.setMaxWidth(Double.MAX_VALUE);
             calendarGrid.add(dayLabel, i, 0);
         }
 
@@ -135,6 +134,14 @@ public class SessionView extends VBox {
         LocalDate firstOfMonth = yearMonth.atDay(1);
         int dayOfWeekOfFirst = firstOfMonth.getDayOfWeek().getValue() % 7; // 0=Sun, 6=Sat
         int daysInMonth = yearMonth.lengthOfMonth();
+
+        // Column constraints for equal width
+        for (int i = 0; i < 7; i++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setHgrow(Priority.ALWAYS);
+            cc.setFillWidth(true);
+            calendarGrid.getColumnConstraints().add(cc);
+        }
 
         int row = 1;
         int col = 0;
@@ -217,6 +224,7 @@ public class SessionView extends VBox {
         cell.setAlignment(Pos.TOP_CENTER);
         cell.setPadding(new Insets(8, 4, 8, 4));
         cell.setMinSize(50, 70);
+        cell.setPrefWidth(120);
         cell.setMaxWidth(Double.MAX_VALUE);
         VBox.setVgrow(cell, Priority.ALWAYS);
 

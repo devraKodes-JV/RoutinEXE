@@ -14,6 +14,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 public class UserFormDialog extends Dialog<User> {
@@ -45,6 +46,7 @@ public class UserFormDialog extends Dialog<User> {
         VBox content = new VBox();
         content.setSpacing(0);
         content.setPadding(new Insets(0));
+        content.setMaxWidth(500);
 
         HBox customHeader = createCustomHeader(isEdit);
         GridPane grid = createFormGrid();
@@ -55,6 +57,12 @@ public class UserFormDialog extends Dialog<User> {
         getDialogPane().sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 newScene.setFill(null);
+                Stage dlgStage = (Stage) getDialogPane().getScene().getWindow();
+                if (dlgStage != null) {
+                    dlgStage.setWidth(540);
+                    dlgStage.setMinWidth(400);
+                    dlgStage.setMaxWidth(600);
+                }
             }
         });
 

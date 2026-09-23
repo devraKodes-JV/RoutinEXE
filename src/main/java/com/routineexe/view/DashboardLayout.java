@@ -120,6 +120,7 @@ public void showCategories() {
 
         // Exercises view with header and table - full height, using real data
         ExerciseView exerciseView = new ExerciseView(this.exercises, this.exerciseListView, this.exerciseToolbar, true);
+        exerciseView.setCategoryOptions(this.categories);
 
         VBox exercisesWrapper = new VBox();
         exercisesWrapper.setStyle("-fx-background-color: #0f0f1a;");

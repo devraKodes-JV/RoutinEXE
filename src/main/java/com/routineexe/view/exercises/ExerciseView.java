@@ -1,10 +1,12 @@
 package com.routineexe.view.exercises;
 
+import com.routineexe.model.Category;
 import com.routineexe.model.Exercise;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -18,6 +20,8 @@ public class ExerciseView extends VBox {
     private final ExerciseToolbar toolbar;
     private HBox headerRow;
     private final boolean showHeader;
+    private ComboBox<Category> categoryFilter;
+    private Label filterLabel;
 
     public ExerciseView(ObservableList<Exercise> exercises, ExerciseListView exerciseListView, ExerciseToolbar toolbar) {
         this(exercises, exerciseListView, toolbar, true);
@@ -35,7 +39,20 @@ public class ExerciseView extends VBox {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            headerRow = new HBox(title, spacer, toolbar.getCreateButton());
+            categoryFilter = new ComboBox<>();
+            categoryFilter.setPromptText("All categories");
+            categoryFilter.setPrefWidth(180);
+            categoryFilter.valueProperty().addListener((obs, oldVal, newVal) -> {
+                exerciseListView.setCategoryFilter(newVal);
+            });
+
+            filterLabel = new Label("Filter:");
+            filterLabel.setStyle("-fx-text-fill: #c0c0d0; -fx-font-size: 13px;");
+
+            HBox filterBox = new HBox(6, filterLabel, categoryFilter);
+            filterBox.setAlignment(Pos.CENTER_LEFT);
+
+            headerRow = new HBox(title, filterBox, spacer, toolbar.getCreateButton());
             headerRow.setAlignment(Pos.CENTER);
             headerRow.setPadding(new Insets(0, 24, 0, 24));
             headerRow.setPrefHeight(56);
@@ -48,10 +65,12 @@ public class ExerciseView extends VBox {
             VBox.setVgrow(contentWrapper, Priority.ALWAYS);
             VBox.setVgrow(exerciseListView, Priority.ALWAYS);
 
+            HBox paginationBar = exerciseListView.getPaginationBar();
+
             setSpacing(0);
             setPadding(new Insets(0));
 
-            getChildren().addAll(headerRow, contentWrapper);
+            getChildren().addAll(headerRow, contentWrapper, paginationBar);
             VBox.setVgrow(this, Priority.ALWAYS);
         } else {
             setSpacing(0);
@@ -59,6 +78,13 @@ public class ExerciseView extends VBox {
             getChildren().add(exerciseListView);
             VBox.setVgrow(this, Priority.ALWAYS);
             VBox.setVgrow(exerciseListView, Priority.ALWAYS);
+        }
+    }
+
+    public void setCategoryOptions(ObservableList<Category> categories) {
+        if (categoryFilter != null) {
+            categoryFilter.getItems().setAll(categories);
+            categoryFilter.getItems().add(0, null);
         }
     }
 
