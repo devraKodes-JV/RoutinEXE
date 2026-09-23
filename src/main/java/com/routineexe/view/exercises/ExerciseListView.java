@@ -146,6 +146,9 @@ public class ExerciseListView extends TableView<Exercise> {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         paginationBar.getChildren().add(1, spacer);
 
+        prevBtn.setOnAction(e -> previousPage());
+        nextBtn.setOnAction(e -> nextPage());
+
         return paginationBar;
     }
 

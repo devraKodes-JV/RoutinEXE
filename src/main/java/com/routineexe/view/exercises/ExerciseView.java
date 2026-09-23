@@ -20,7 +20,8 @@ public class ExerciseView extends VBox {
     private final Label title = new Label("Exercises");
     private final ExerciseListView exerciseListView;
     private final ExerciseToolbar toolbar;
-    private HBox headerRow;
+    private HBox titleBar;
+    private HBox filterBar;
     private final boolean showHeader;
     private ComboBox<Category> categoryFilter;
     private TextField searchField;
@@ -41,6 +42,17 @@ public class ExerciseView extends VBox {
         if (showHeader) {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            Button createBtn = toolbar.getCreateButton();
+
+            HBox titleContent = new HBox(title, spacer, createBtn);
+            titleContent.setAlignment(Pos.CENTER_LEFT);
+            titleContent.setPadding(new Insets(0, 24, 0, 24));
+            titleContent.setPrefHeight(56);
+            titleContent.setMinHeight(56);
+            titleContent.setMaxHeight(56);
+            titleContent.setStyle("-fx-background-color: #1a1a2e; -fx-border-color: transparent transparent #2a2a4a transparent;");
+            titleBar = titleContent;
 
             categoryFilter = new ComboBox<>();
             categoryFilter.setPromptText("All categories");
@@ -64,8 +76,8 @@ public class ExerciseView extends VBox {
             filterLabel = new Label("Filter:");
             filterLabel.setStyle("-fx-text-fill: #c0c0d0; -fx-font-size: 13px;");
 
-            HBox filterBox = new HBox(6, filterLabel, categoryFilter);
-            filterBox.setAlignment(Pos.CENTER_LEFT);
+            HBox filterLeft = new HBox(6, filterLabel, categoryFilter);
+            filterLeft.setAlignment(Pos.CENTER_LEFT);
 
             searchField = new TextField();
             searchField.setPromptText("Search exercises...");
@@ -75,20 +87,13 @@ public class ExerciseView extends VBox {
                 exerciseListView.setSearchFilter(newVal);
             });
 
-            HBox filterRow = new HBox(12, filterBox, spacer, searchField);
-            filterRow.setAlignment(Pos.CENTER_LEFT);
+            filterBar = new HBox(12, filterLeft, searchField);
+            filterBar.setAlignment(Pos.CENTER_LEFT);
+            filterBar.setPadding(new Insets(12, 24, 12, 24));
             HBox.setHgrow(searchField, Priority.ALWAYS);
 
-            headerRow = new HBox(title, filterRow, toolbar.getCreateButton());
-            headerRow.setAlignment(Pos.CENTER);
-            headerRow.setPadding(new Insets(0, 24, 0, 24));
-            headerRow.setPrefHeight(56);
-            headerRow.setMinHeight(56);
-            headerRow.setMaxHeight(56);
-            headerRow.setStyle("-fx-background-color: #1a1a2e; -fx-border-color: transparent transparent #2a2a4a transparent;");
-
             VBox contentWrapper = new VBox(exerciseListView);
-            contentWrapper.setPadding(new Insets(24));
+            contentWrapper.setPadding(new Insets(0, 24, 0, 24));
             VBox.setVgrow(contentWrapper, Priority.ALWAYS);
             VBox.setVgrow(exerciseListView, Priority.ALWAYS);
 
@@ -97,8 +102,10 @@ public class ExerciseView extends VBox {
             setSpacing(0);
             setPadding(new Insets(0));
 
-            getChildren().addAll(headerRow, contentWrapper, paginationBar);
+            getChildren().addAll(titleBar, filterBar, contentWrapper, paginationBar);
             VBox.setVgrow(this, Priority.ALWAYS);
+            VBox.setVgrow(contentWrapper, Priority.ALWAYS);
+            VBox.setVgrow(exerciseListView, Priority.ALWAYS);
         } else {
             setSpacing(0);
             setPadding(new Insets(24));
@@ -123,7 +130,7 @@ public class ExerciseView extends VBox {
         return toolbar;
     }
 
-    public HBox getHeaderRow() {
-        return headerRow;
+    public HBox getTitleBar() {
+        return titleBar;
     }
 }
