@@ -23,16 +23,16 @@ jobs:
         include:
           - os: ubuntu-latest
             classifier: linux
-            pkg_type: app-image
-            artifact_name: routin-exe-linux
+            artifact_name: routin-exe-jar
+            build_artifact: ""
           - os: windows-latest
             classifier: win
-            pkg_type: exe
             artifact_name: routin-exe-windows
+            build_artifact: exe
           - os: macos-latest
             classifier: mac
-            pkg_type: dmg
             artifact_name: routin-exe-macos
+            build_artifact: dmg
 
     runs-on: ${{ matrix.os }}
 
@@ -54,7 +54,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build JAR (includes SQLite JDBC via shade plugin)
+      - name: Build JAR
         run: mvn clean package -Plinux
 
       - name: Collect JavaFX jars
@@ -76,115 +76,43 @@ jobs:
 
           ls -la jfx-deps/
 
-      - name: Generate platform icon
+      - name: Generate Windows ICO icon
         if: matrix.os == 'windows-latest'
-        run: magick convert src/main/resources/routinexe.png -define icon:auto-resize=256,128,64,48,32,16 src/main/resources/routinexe.ico
         shell: bash
+        continue-on-error: true
+        run: magick convert src/main/resources/routinexe.png -define icon:auto-resize=256,128,64,48,32,16 src/main/resources/routinexe.ico
 
-      - name: Generate platform icon
+      - name: Generate macOS ICNS icon
         if: matrix.os == 'macos-latest'
         shell: bash
+        continue-on-error: true
         run: |
+          rm -rf src/main/resources/routinexe.iconset
           mkdir -p src/main/resources/routinexe.iconset
-          sips -z 16x16     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_16x16.png
-          sips -z 32x32     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_16x16@2x.png
-          sips -z 32x32     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_32x32.png
-          sips -z 64x64     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_32x32@2x.png
-          sips -z 128x128   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_128x128.png
-          sips -z 256x256   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_128x128@2x.png
-          sips -z 256x256   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_256x256.png
-          sips -z 512x512   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_256x256@2x.png
-          sips -z 512x512   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_512x512.png
-          sips -z 1024x1024 src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_512x512@2x.png
-          iconutil -c icns src/main/resources/routinexe.iconset -o src/main/resources/routinexe.icns
+          sips -z 16x16     src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_16x16.png" 2>/dev/null
+          sips -z 32x32     src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_16x16@2x.png" 2>/dev/null
+          sips -z 32x32     src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_32x32.png" 2>/dev/null
+          sips -z 64x64     src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_32x32@2x.png" 2>/dev/null
+          sips -z 128x128   src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_128x128.png" 2>/dev/null
+          sips -z 256x256   src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_128x128@2x.png" 2>/dev/null
+          sips -z 256x256   src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_256x256.png" 2>/dev/null
+          sips -z 512x512   src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_256x256@2x.png" 2>/dev/null
+          sips -z 512x512   src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_512x512.png" 2>/dev/null
+          sips -z 1024x1024 src/main/resources/routinexe.png --out "src/main/resources/routinexe.iconset/icon_512x512@2x.png" 2>/dev/null
+          iconutil -c icns "src/main/resources/routinexe.iconset" -o src/main/resources/routinexe.icns 2>&1
 
-      - name: Package - Linux (AppImage)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          # Install libfuse2 for appimagetool
-          sudo apt-get update
-          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || true
-
-          # Download appimagetool
-          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" -O /tmp/appimagetool.AppImage
-          chmod +x /tmp/appimagetool.AppImage
-
-          # Build jpackage app-image
-          jpackage \
-            --name RoutinEXE \
-            --app-version 1.0.0 \
-            --icon src/main/resources/routinexe.png \
-            --input target \
-            --main-jar routin-exe.jar \
-            --main-class com.routineexe.view.Main \
-            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
-            --module-path jfx-deps \
-            --type app-image \
-            --dest jpackage-out \
-            --java-options "-Xmx512m"
-
-          # Create AppDir for appimagetool from jpackage output
-          rm -rf AppDir
-          mkdir -p AppDir/usr/lib/app
-          mkdir -p AppDir/usr/lib/javafx
-          mkdir -p AppDir/usr/lib/runtime
-          mkdir -p AppDir/data
-
-          # Copy app jar (fat JAR includes SQLite JDBC)
-          cp target/routin-exe.jar AppDir/usr/lib/app/
-
-          # Copy JavaFX jars
-          cp jfx-deps/javafx-*.jar AppDir/usr/lib/javafx/
-
-          # Copy bundled runtime from jpackage
-          if [ -d jpackage-out/RoutinEXE/runtime ]; then
-            cp -r jpackage-out/RoutinEXE/runtime/* AppDir/usr/lib/runtime/
-          fi
-
-          # Copy seed data
-          cp data/seed.sql AppDir/data/
-
-          # Create AppRun
-          cat > AppDir/AppRun << 'EOF'
-          #!/bin/bash
-          HERE="$(dirname "$(readlink -f "$0")")"
-          JAVAFX_JARS=""
-          for jar in "$HERE/usr/lib/javafx"/*.jar; do
-            JAVAFX_JARS="$JAVAFX_JARS:$jar"
-          done
-          exec "$HERE/usr/lib/runtime/bin/java" \
-            --module-path "$HERE/usr/lib/javafx" \
-            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
-            -classpath "$HERE/usr/lib/app/routin-exe.jar:$JAVAFX_JARS" \
-            com.routineexe.view.Main "$@"
-          EOF
-          chmod +x AppDir/AppRun
-
-          # Create desktop file
-          cat > AppDir/RoutinEXE.desktop << 'DESKTOP'
-          [Desktop Entry]
-          Name=RoutinEXE
-          Exec=AppRun
-          Icon=routinexe
-          Type=Application
-          Categories=Education;
-          DESKTOP
-
-          # Copy icon
-          cp src/main/resources/routinexe.png AppDir/
-
-          # Build AppImage
-          /tmp/appimagetool.AppImage AppDir dist/RoutinEXE-x86_64.AppImage
-
-      - name: Package - Windows (EXE)
+      - name: Build native package - Windows (EXE)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
+          ICON_OPT=""
+          if [ -f "src/main/resources/routinexe.ico" ]; then
+            ICON_OPT="--icon src/main/resources/routinexe.ico"
+          fi
+
           jpackage \
             --name RoutinEXE \
             --app-version 1.0.0 \
-            --icon src/main/resources/routinexe.ico \
             --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
@@ -195,16 +123,21 @@ jobs:
             --java-options "-Xmx512m" \
             --win-dir-chooser \
             --win-shortcut \
-            --win-menu
+            --win-menu \
+            $ICON_OPT
 
-      - name: Package - macOS (DMG)
+      - name: Build native package - macOS (DMG)
         if: matrix.os == 'macos-latest'
         shell: bash
         run: |
+          ICON_OPT=""
+          if [ -f "src/main/resources/routinexe.icns" ]; then
+            ICON_OPT="--icon src/main/resources/routinexe.icns"
+          fi
+
           jpackage \
             --name RoutinEXE \
             --app-version 1.0.0 \
-            --icon src/main/resources/routinexe.icns \
             --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
@@ -212,20 +145,14 @@ jobs:
             --module-path jfx-deps \
             --type dmg \
             --dest release-artifacts \
-            --java-options "-Xmx512m"
+            --java-options "-Xmx512m" \
+            $ICON_OPT
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: routin-exe-jar
           path: target/routin-exe.jar
-
-      - name: Upload Linux AppImage
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/RoutinEXE-x86_64.AppImage
 
       - name: Upload Windows EXE
         if: matrix.os == 'windows-latest'
@@ -263,6 +190,5 @@ jobs:
           name: Release ${{ github.event.inputs.tag_name || github.ref_name }}
           files: |
             artifacts/routin-exe.jar
-            artifacts/RoutinEXE-x86_64.AppImage
-            artifacts/*.exe
-            artifacts/*.dmg
+            artifacts/RoutinEXE-*.exe
+            artifacts/RoutinEXE-*.dmg
