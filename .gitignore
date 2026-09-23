@@ -16,6 +16,7 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 data/*.db-journal
+data/personal_seed.sql
 
 ## Distribución
 dist/
