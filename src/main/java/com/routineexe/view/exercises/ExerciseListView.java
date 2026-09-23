@@ -76,6 +76,7 @@ public class ExerciseListView extends TableView<Exercise> {
         setPlaceholder(new Label("No exercises yet"));
 
         updatePagination();
+        showCurrentPage();
     }
 
     public void setCategoryFilter(Category category) {

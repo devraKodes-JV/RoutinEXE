@@ -7,6 +7,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -14,7 +16,7 @@ import javafx.scene.layout.VBox;
 
 public class UserView extends VBox {
 
-    private final Label title = new Label("RoutinEXE");
+    private final ImageView title = new ImageView();
     private final UserListView userListView;
     private final Button createUserBtn;
 
@@ -58,8 +60,11 @@ public class UserView extends VBox {
         HBox.setHgrow(contentContainer, Priority.ALWAYS);
         VBox.setVgrow(contentContainer, Priority.ALWAYS);
 
-        title.getStyleClass().add("title");
-        getStyleClass().add("root");
+         title.setImage(new Image(getClass().getResourceAsStream("/rountinexe-name.png")));
+         title.setFitHeight(32);
+         title.setPreserveRatio(true);
+         title.getStyleClass().add("title");
+         getStyleClass().add("root");
         setSpacing(0);
         setPadding(new Insets(0));
 
