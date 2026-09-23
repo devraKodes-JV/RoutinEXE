@@ -23,13 +23,16 @@ jobs:
         include:
           - os: ubuntu-latest
             classifier: linux
-            type: app-image
+            pkg_type: app-image
+            artifact_name: routin-exe-linux
           - os: windows-latest
             classifier: win
-            type: exe
+            pkg_type: exe
+            artifact_name: routin-exe-windows
           - os: macos-latest
             classifier: mac
-            type: dmg
+            pkg_type: dmg
+            artifact_name: routin-exe-macos
 
     runs-on: ${{ matrix.os }}
 
@@ -51,40 +54,58 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build JAR
+      - name: Build JAR (includes SQLite JDBC via shade plugin)
         run: mvn clean package -Plinux
 
-      - name: Collect native dependencies
+      - name: Collect JavaFX jars
         shell: bash
         run: |
-          mkdir -p jpackage-deps
+          mkdir -p jfx-deps
           CLASSIFIER="${{ matrix.classifier }}"
           echo "Classifier: $CLASSIFIER"
 
-          # JavaFX jars
           for mod in base controls graphics media; do
             JAR=$(find ~/.m2/repository/org/openjfx -name "javafx-${mod}-25.0.4-${CLASSIFIER}.jar" ! -name "*sources*" ! -name "*javadoc*" | head -1)
             if [ -z "$JAR" ]; then
               echo "ERROR: JavaFX ${mod} jar not found for $CLASSIFIER"
               exit 1
             fi
-            cp "$JAR" jpackage-deps/
+            cp "$JAR" jfx-deps/
             echo "Copied: $(basename $JAR)"
           done
 
-          # SQLite JDBC
-          SQLITE_JAR=$(find ~/.m2/repository/org/xerial -name "sqlite-jdbc-*.jar" ! -name "*sources*" ! -name "*javadoc*" | head -1)
-          cp "$SQLITE_JAR" jpackage-deps/
-          SQLITE_BASENAME=$(basename "$SQLITE_JAR")
-          echo "SQLITE_BASENAME=$SQLITE_BASENAME" >> $GITHUB_ENV
-          echo "Copied: $SQLITE_BASENAME"
+          ls -la jfx-deps/
 
-          ls -la jpackage-deps/
+      - name: Generate platform icon
+        if: matrix.os == 'windows-latest'
+        run: magick convert src/main/resources/routinexe.png -define icon:auto-resize=256,128,64,48,32,16 src/main/resources/routinexe.ico
+        shell: bash
+
+      - name: Generate platform icon
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          mkdir -p src/main/resources/routinexe.iconset
+          sips -z 16x16     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_16x16.png
+          sips -z 32x32     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_16x16@2x.png
+          sips -z 32x32     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_32x32.png
+          sips -z 64x64     src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_32x32@2x.png
+          sips -z 128x128   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_128x128.png
+          sips -z 256x256   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_128x128@2x.png
+          sips -z 256x256   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_256x256.png
+          sips -z 512x512   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_256x256@2x.png
+          sips -z 512x512   src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_512x512.png
+          sips -z 1024x1024 src/main/resources/routinexe.png --out src/main/resources/routinexe.iconset/icon_512x512@2x.png
+          iconutil -c icns src/main/resources/routinexe.iconset -o src/main/resources/routinexe.icns
 
       - name: Package - Linux (AppImage)
         if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
+          # Install libfuse2 for appimagetool
+          sudo apt-get update
+          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || true
+
           # Download appimagetool
           wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" -O /tmp/appimagetool.AppImage
           chmod +x /tmp/appimagetool.AppImage
@@ -94,53 +115,49 @@ jobs:
             --name RoutinEXE \
             --app-version 1.0.0 \
             --icon src/main/resources/routinexe.png \
-            --input dist \
+            --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
             --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
-            --module-path jpackage-deps \
-            --class-path "${SQLITE_BASENAME}" \
+            --module-path jfx-deps \
             --type app-image \
             --dest jpackage-out \
             --java-options "-Xmx512m"
 
-          # Create AppDir for appimagetool
+          # Create AppDir for appimagetool from jpackage output
           rm -rf AppDir
-          mkdir -p AppDir/data
           mkdir -p AppDir/usr/lib/app
           mkdir -p AppDir/usr/lib/javafx
           mkdir -p AppDir/usr/lib/runtime
+          mkdir -p AppDir/data
 
-          # Copy app jar
-          cp jpackage-out/RoutinEXE/lib/routin-exe.jar AppDir/usr/lib/app/
+          # Copy app jar (fat JAR includes SQLite JDBC)
+          cp target/routin-exe.jar AppDir/usr/lib/app/
 
           # Copy JavaFX jars
-          cp jpackage-deps/javafx-*.jar AppDir/usr/lib/javafx/
+          cp jfx-deps/javafx-*.jar AppDir/usr/lib/javafx/
 
-          # Copy SQLite jar
-          cp jpackage-deps/${SQLITE_BASENAME} AppDir/usr/lib/
-
-          # Copy bundled runtime
-          cp -r jpackage-out/RoutinEXE/runtime/* AppDir/usr/lib/runtime/
+          # Copy bundled runtime from jpackage
+          if [ -d jpackage-out/RoutinEXE/runtime ]; then
+            cp -r jpackage-out/RoutinEXE/runtime/* AppDir/usr/lib/runtime/
+          fi
 
           # Copy seed data
           cp data/seed.sql AppDir/data/
 
-          # Build classpath string for AppRun
-          JAVAFX_CP=""
-          for jar in AppDir/usr/lib/javafx/*.jar; do
-            JAVAFX_CP="$JAVAFX_CP:\$HERE/usr/lib/javafx/$(basename $jar)"
-          done
-
           # Create AppRun
-          cat > AppDir/AppRun << EOF
+          cat > AppDir/AppRun << 'EOF'
           #!/bin/bash
-          HERE="\$(dirname "\$(readlink -f "\$0")")"
-          exec "\$HERE/usr/lib/runtime/bin/java" \\
-            --module-path "\$HERE/usr/lib/javafx" \\
-            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \\
-            -classpath "\$HERE/usr/lib/app/routin-exe.jar:\$HERE/usr/lib/${SQLITE_BASENAME}${JAVAFX_CP}" \\
-            com.routineexe.view.Main "\$@"
+          HERE="$(dirname "$(readlink -f "$0")")"
+          JAVAFX_JARS=""
+          for jar in "$HERE/usr/lib/javafx"/*.jar; do
+            JAVAFX_JARS="$JAVAFX_JARS:$jar"
+          done
+          exec "$HERE/usr/lib/runtime/bin/java" \
+            --module-path "$HERE/usr/lib/javafx" \
+            --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
+            -classpath "$HERE/usr/lib/app/routin-exe.jar:$JAVAFX_JARS" \
+            com.routineexe.view.Main "$@"
           EOF
           chmod +x AppDir/AppRun
 
@@ -155,7 +172,7 @@ jobs:
           DESKTOP
 
           # Copy icon
-          cp src/main/resources/routinexe.png AppDir/RoutinEXE.png
+          cp src/main/resources/routinexe.png AppDir/
 
           # Build AppImage
           /tmp/appimagetool.AppImage AppDir dist/RoutinEXE-x86_64.AppImage
@@ -164,20 +181,15 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          # Convert paths for Windows
-          ICON_PATH="src/main/resources/routinexe.png"
-          SQLITE_JAR_NAME="${SQLITE_BASENAME}"
-
           jpackage \
             --name RoutinEXE \
             --app-version 1.0.0 \
-            --icon "$ICON_PATH" \
-            --input dist \
+            --icon src/main/resources/routinexe.ico \
+            --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
             --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
-            --module-path jpackage-deps \
-            --class-path "$SQLITE_JAR_NAME" \
+            --module-path jfx-deps \
             --type exe \
             --dest release-artifacts \
             --java-options "-Xmx512m" \
@@ -192,13 +204,12 @@ jobs:
           jpackage \
             --name RoutinEXE \
             --app-version 1.0.0 \
-            --icon src/main/resources/routinexe.png \
-            --input dist \
+            --icon src/main/resources/routinexe.icns \
+            --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
             --add-modules javafx.base,javafx.controls,javafx.graphics,javafx.media \
-            --module-path jpackage-deps \
-            --class-path "${SQLITE_BASENAME}" \
+            --module-path jfx-deps \
             --type dmg \
             --dest release-artifacts \
             --java-options "-Xmx512m"
@@ -207,29 +218,28 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: routin-exe-jar
-          path: dist/routin-exe.jar
+          path: target/routin-exe.jar
 
-      - name: Upload Linux artifacts
+      - name: Upload Linux AppImage
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: routin-exe-linux
-          path: |
-            dist/RoutinEXE-x86_64.AppImage
+          name: ${{ matrix.artifact_name }}
+          path: dist/RoutinEXE-x86_64.AppImage
 
-      - name: Upload Windows artifacts
+      - name: Upload Windows EXE
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: routin-exe-windows
+          name: ${{ matrix.artifact_name }}
           path: |
             release-artifacts/*
 
-      - name: Upload macOS artifacts
+      - name: Upload macOS DMG
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: routin-exe-macos
+          name: ${{ matrix.artifact_name }}
           path: |
             release-artifacts/*
 
