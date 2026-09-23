@@ -21,15 +21,15 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
-import javafx.util.StringConverter;
 
 public class ExerciseListView extends TableView<Exercise> {
 
-    private static final int PAGE_SIZE = 20;
+    private static final int PAGE_SIZE = 10;
 
     private final FilteredList<Exercise> filteredList;
     private final ObservableList<Exercise> masterList;
     private Category categoryFilter = null;
+    private String searchFilter = "";
     private int currentPage = 0;
     private int totalPages = 0;
 
@@ -81,10 +81,22 @@ public class ExerciseListView extends TableView<Exercise> {
     public void setCategoryFilter(Category category) {
         this.categoryFilter = category;
         this.currentPage = 0;
+        applyFilters();
+    }
+
+    public void setSearchFilter(String search) {
+        this.searchFilter = search != null ? search.trim().toLowerCase() : "";
+        this.currentPage = 0;
+        applyFilters();
+    }
+
+    private void applyFilters() {
         filteredList.setPredicate(exercise -> {
-            if (category == null) return true;
-            if (exercise.getCategory() == null) return false;
-            return exercise.getCategory().getId().equals(category.getId());
+            boolean matchesSearch = searchFilter.isEmpty()
+                    || (exercise.getName() != null && exercise.getName().toLowerCase().contains(searchFilter));
+            boolean matchesCategory = categoryFilter == null
+                    || (exercise.getCategory() != null && exercise.getCategory().getId().equals(categoryFilter.getId()));
+            return matchesSearch && matchesCategory;
         });
         updatePagination();
         showCurrentPage();

@@ -8,10 +8,12 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 public class ExerciseView extends VBox {
 
@@ -21,6 +23,7 @@ public class ExerciseView extends VBox {
     private HBox headerRow;
     private final boolean showHeader;
     private ComboBox<Category> categoryFilter;
+    private TextField searchField;
     private Label filterLabel;
 
     public ExerciseView(ObservableList<Exercise> exercises, ExerciseListView exerciseListView, ExerciseToolbar toolbar) {
@@ -42,6 +45,18 @@ public class ExerciseView extends VBox {
             categoryFilter = new ComboBox<>();
             categoryFilter.setPromptText("All categories");
             categoryFilter.setPrefWidth(180);
+            categoryFilter.setConverter(new StringConverter<Category>() {
+                @Override
+                public String toString(Category category) {
+                    return category == null ? "All categories" : category.getName();
+                }
+
+                @Override
+                public Category fromString(String string) {
+                    return null;
+                }
+            });
+            categoryFilter.setStyle("-fx-background-color: #0f0f1a; -fx-text-fill: #e8e8f0; -fx-font-size: 13px; -fx-pref-height: 32px; -fx-cursor: hand;");
             categoryFilter.valueProperty().addListener((obs, oldVal, newVal) -> {
                 exerciseListView.setCategoryFilter(newVal);
             });
@@ -52,7 +67,19 @@ public class ExerciseView extends VBox {
             HBox filterBox = new HBox(6, filterLabel, categoryFilter);
             filterBox.setAlignment(Pos.CENTER_LEFT);
 
-            headerRow = new HBox(title, filterBox, spacer, toolbar.getCreateButton());
+            searchField = new TextField();
+            searchField.setPromptText("Search exercises...");
+            searchField.setPrefWidth(200);
+            searchField.setStyle("-fx-background-color: #0f0f1a; -fx-text-fill: #e8e8f0; -fx-font-size: 13px; -fx-pref-height: 32px; -fx-prompt-text-fill: #606078;");
+            searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+                exerciseListView.setSearchFilter(newVal);
+            });
+
+            HBox filterRow = new HBox(12, filterBox, spacer, searchField);
+            filterRow.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+
+            headerRow = new HBox(title, filterRow, toolbar.getCreateButton());
             headerRow.setAlignment(Pos.CENTER);
             headerRow.setPadding(new Insets(0, 24, 0, 24));
             headerRow.setPrefHeight(56);
