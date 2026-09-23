@@ -34,14 +34,14 @@ public class RoutineDAO {
                     routine.setUserId(rs.getLong("user_id"));
                     routine.setName(rs.getString("name"));
                     
-                    Date sinceDate = rs.getDate("since_date");
+                    LocalDate sinceDate = rs.getObject("since_date", LocalDate.class);
                     if (sinceDate != null) {
-                        routine.setSince(sinceDate.toLocalDate());
+                        routine.setSince(sinceDate);
                     }
                     
-                    Date untilDate = rs.getDate("until_date");
+                    LocalDate untilDate = rs.getObject("until_date", LocalDate.class);
                     if (untilDate != null) {
-                        routine.setUntil(untilDate.toLocalDate());
+                        routine.setUntil(untilDate);
                     }
                     
                     routines.add(routine);
@@ -78,14 +78,14 @@ public class RoutineDAO {
                     routine.setUserId(rs.getLong("user_id"));
                     routine.setName(rs.getString("name"));
                     
-                    Date sinceDate = rs.getDate("since_date");
+                    LocalDate sinceDate = rs.getObject("since_date", LocalDate.class);
                     if (sinceDate != null) {
-                        routine.setSince(sinceDate.toLocalDate());
+                        routine.setSince(sinceDate);
                     }
                     
-                    Date untilDate = rs.getDate("until_date");
+                    LocalDate untilDate = rs.getObject("until_date", LocalDate.class);
                     if (untilDate != null) {
-                        routine.setUntil(untilDate.toLocalDate());
+                        routine.setUntil(untilDate);
                     }
                     
                     routines.add(routine);
