@@ -76,6 +76,10 @@ public class ExerciseListView extends TableView<Exercise> {
         setPlaceholder(new Label("No exercises yet"));
 
         updatePagination();
+    }
+
+    public void refreshPagination() {
+        updatePagination();
         showCurrentPage();
     }
 

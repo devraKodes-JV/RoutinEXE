@@ -326,6 +326,7 @@ public class Main extends Application {
     private void loadExercises() {
         try {
             exercises.setAll(exerciseDAO.fetchAll());
+            exerciseListView.refreshPagination();
         } catch (Exception e) {
             showError("Failed to load exercises: " + e.getMessage());
         }
