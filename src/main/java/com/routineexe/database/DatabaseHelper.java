@@ -57,10 +57,16 @@ public final class DatabaseHelper {
         boolean empty = conn.createStatement().executeQuery("SELECT COUNT(*) FROM " + TABLE_CATEGORIES).getInt(1) == 0;
         if (!empty) return;
 
+        String sql;
         Path seedPath = findSeedSql();
-        if (seedPath == null) return;
+        if (seedPath != null) {
+            sql = Files.readString(seedPath, StandardCharsets.UTF_8);
+        } else {
+            java.io.InputStream is = DatabaseHelper.class.getResourceAsStream("/seed.sql");
+            if (is == null) return;
+            sql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
 
-        String sql = Files.readString(seedPath, StandardCharsets.UTF_8);
         conn.setAutoCommit(false);
         try (Statement stmt = conn.createStatement()) {
             for (String batch : sql.split(";")) {
