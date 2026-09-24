@@ -33,7 +33,7 @@ public final class DatabaseHelper {
 
     public static synchronized Connection getConnection() throws Exception {
         if (connection == null || connection.isClosed()) {
-            Path dataDir = Paths.get(System.getProperty("user.dir"), "data");
+            Path dataDir = getDataDirectory();
             Files.createDirectories(dataDir);
             Path dbPath = dataDir.resolve(DB_NAME);
             String url = "jdbc:sqlite:" + dbPath.toAbsolutePath();
@@ -43,6 +43,14 @@ public final class DatabaseHelper {
             seedDatabase(connection);
         }
         return connection;
+    }
+
+    private static Path getDataDirectory() {
+        String appImage = System.getenv("APPIMAGE");
+        if (appImage != null && !appImage.isEmpty()) {
+            return Paths.get(appImage).getParent().resolve("data");
+        }
+        return Paths.get(System.getProperty("user.dir"), "data");
     }
 
     private static void seedDatabase(Connection conn) throws Exception {
@@ -71,9 +79,15 @@ public final class DatabaseHelper {
     }
 
     private static Path findSeedSql() {
-        Path dataDir = Paths.get(System.getProperty("user.dir"), "data");
+        Path dataDir = getDataDirectory();
         Path seedPath = dataDir.resolve("seed.sql");
         if (Files.exists(seedPath)) return seedPath;
+
+        String appDir = System.getenv("APPDIR");
+        if (appDir != null && !appDir.isEmpty()) {
+            seedPath = Paths.get(appDir, "data", "seed.sql");
+            if (Files.exists(seedPath)) return seedPath;
+        }
 
         String appImage = System.getenv("APPIMAGE");
         if (appImage != null && !appImage.isEmpty()) {
