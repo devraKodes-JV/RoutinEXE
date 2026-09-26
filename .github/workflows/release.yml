@@ -112,7 +112,7 @@ jobs:
 
           jpackage \
             --name RoutinEXE \
-            --app-version 1.0.0 \
+            --app-version 1.0.1 \
             --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
@@ -137,7 +137,7 @@ jobs:
 
           jpackage \
             --name RoutinEXE \
-            --app-version 1.0.0 \
+            --app-version 1.0.1 \
             --input target \
             --main-jar routin-exe.jar \
             --main-class com.routineexe.view.Main \
