@@ -22,14 +22,16 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.StageStyle;
-import javafx.stage.StageStyle;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class RoutineExerciseAssignmentDialog extends Dialog<Void> {
@@ -181,6 +183,7 @@ public class RoutineExerciseAssignmentDialog extends Dialog<Void> {
                 long id = routineExerciseDAO.insert(re);
                 re.setId(id);
                 routineExercises.add(re);
+                sortByDayAndOrder();
                 filterTableByDay(); // Refresh filtered list
                 
                 exerciseCombo.getSelectionModel().clearSelection();
@@ -236,6 +239,7 @@ private void setupExerciseTable() {
         exerciseTable.setItems(filteredExercises);
         exerciseTable.getStyleClass().add("user-table");
         exerciseTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        exerciseTable.setEditable(true);
 
         TableColumn<RoutineExercise, String> exerciseCol = new TableColumn<>("Exercise");
         exerciseCol.setCellValueFactory(cellData -> {
@@ -244,48 +248,221 @@ private void setupExerciseTable() {
             return new SimpleStringProperty(name);
         });
         exerciseCol.setPrefWidth(200);
+        exerciseCol.setCellFactory(col -> new TableCell<>() {
+            private final ComboBox<Exercise> comboBox = createExerciseCombo();
+
+            {
+                comboBox.setOnAction(e -> {
+                    Exercise selected = comboBox.getValue();
+                    RoutineExercise re = getTableView().getItems().get(getIndex());
+                    if (re == null || selected == null) {
+                        return;
+                    }
+                    Exercise current = findExercise(re.getExercise());
+                    if (current != null && current.getId().equals(selected.getId())) {
+                        return;
+                    }
+                    re.setExercise(selected);
+                    save(re);
+                });
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    RoutineExercise re = getTableView().getItems().get(getIndex());
+                    comboBox.setValue(findExercise(re.getExercise()));
+                    setGraphic(comboBox);
+                }
+            }
+        });
 
         TableColumn<RoutineExercise, String> dayCol = new TableColumn<>("Day");
         dayCol.setCellValueFactory(cellData -> {
             DayOfWeek day = cellData.getValue().getDayOfWeek();
             return new SimpleStringProperty(day != null ? day.getFullName() : "-");
         });
-        dayCol.setPrefWidth(120);
+        dayCol.setPrefWidth(150);
+        dayCol.setCellFactory(col -> new TableCell<>() {
+            private final ComboBox<DayOfWeek> comboBox = new ComboBox<>(FXCollections.observableArrayList(routine.getDays()));
 
-        TableColumn<RoutineExercise, String> setsCol = new TableColumn<>("Sets");
-        setsCol.setCellValueFactory(cellData -> {
-            Integer sets = cellData.getValue().getSets();
-            return new SimpleStringProperty(sets != null ? sets.toString() : "-");
-        });
-        setsCol.setPrefWidth(80);
+            {
+                comboBox.setPrefWidth(130);
+                comboBox.getStyleClass().add("combo-box");
+                comboBox.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
+                    @Override
+                    protected void updateItem(DayOfWeek value, boolean empty) {
+                        super.updateItem(value, empty);
+                        setText(empty || value == null ? null : value.getFullName());
+                    }
+                });
+                comboBox.setButtonCell(new javafx.scene.control.ListCell<>() {
+                    @Override
+                    protected void updateItem(DayOfWeek value, boolean empty) {
+                        super.updateItem(value, empty);
+                        setText(empty || value == null ? null : value.getFullName());
+                    }
+                });
 
-        // Reps/Time column - shows "X reps" or "Ys" for time-based
-        TableColumn<RoutineExercise, String> repsTimeCol = new TableColumn<>("Reps / Time (seconds)");
-        repsTimeCol.setCellValueFactory(cellData -> {
-            RoutineExercise re = cellData.getValue();
-            Exercise exercise = re.getExercise();
-            if (exercise != null && exercise.isTimeBased()) {
-                Integer reps = re.getReps();
-                return new SimpleStringProperty(reps != null ? reps + "s" : "-");
-            } else {
-                Integer reps = re.getReps();
-                return new SimpleStringProperty(reps != null ? reps.toString() : "-");
+                comboBox.setOnAction(e -> {
+                    DayOfWeek selected = comboBox.getValue();
+                    RoutineExercise re = getTableView().getItems().get(getIndex());
+                    if (re == null || selected == null || selected.equals(re.getDayOfWeek())) {
+                        return;
+                    }
+                    re.setDayOfWeek(selected);
+                    try {
+                        re.setOrderIndex(routineExerciseDAO.nextOrderIndex(routine.getId(), selected));
+                    } catch (Exception ex) {
+                        re.setOrderIndex(null);
+                    }
+                    save(re);
+                    filterTableByDay();
+                });
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    comboBox.setValue(getTableView().getItems().get(getIndex()).getDayOfWeek());
+                    setGraphic(comboBox);
+                }
             }
         });
-        repsTimeCol.setPrefWidth(120);
+
+        TableColumn<RoutineExercise, Integer> setsCol = new TableColumn<>("Sets");
+        setsCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getSets()));
+        setsCol.setPrefWidth(80);
+        setsCol.setCellFactory(col -> new TableCell<>() {
+            private final TextField textField = createInlineTextField();
+
+            {
+                textField.setOnAction(e -> commit());
+                textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                    if (!newVal) {
+                        commit();
+                    }
+                });
+            }
+
+            private void commit() {
+                RoutineExercise re = getTableView().getItems().get(getIndex());
+                if (re == null) {
+                    return;
+                }
+                Integer value = parsePositiveInt(textField.getText());
+                if (value == null || value.equals(re.getSets())) {
+                    return;
+                }
+                re.setSets(value);
+                save(re);
+            }
+
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    textField.setText(item.toString());
+                    setGraphic(textField);
+                }
+            }
+        });
+
+        // Reps/Time column - shows "X reps" or "Ys" for time-based
+        TableColumn<RoutineExercise, Integer> repsTimeCol = new TableColumn<>("Reps / Time (seconds)");
+        repsTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getReps()));
+        repsTimeCol.setPrefWidth(130);
+        repsTimeCol.setCellFactory(col -> new TableCell<>() {
+            private final TextField textField = createInlineTextField();
+
+            {
+                textField.setOnAction(e -> commit());
+                textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                    if (!newVal) {
+                        commit();
+                    }
+                });
+            }
+
+            private void commit() {
+                RoutineExercise re = getTableView().getItems().get(getIndex());
+                if (re == null) {
+                    return;
+                }
+                Integer value = parsePositiveInt(textField.getText());
+                if (value == null || value.equals(re.getReps())) {
+                    return;
+                }
+                re.setReps(value);
+                save(re);
+            }
+
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    RoutineExercise re = getTableView().getItems().get(getIndex());
+                    boolean timeBased = re.getExercise() != null && re.getExercise().isTimeBased();
+                    textField.setText(timeBased ? item + "s" : item.toString());
+                    setGraphic(textField);
+                }
+            }
+        });
 
         TableColumn<RoutineExercise, RoutineExercise> actionsCol = new TableColumn<>("Actions");
         actionsCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue()));
-        actionsCol.setPrefWidth(100);
+        actionsCol.setPrefWidth(140);
         actionsCol.setCellFactory(col -> new TableCell<>() {
-            private final javafx.scene.control.Button deleteBtn = createIconButton(com.routineexe.util.FontAwesomeIcons.TRASH, "btn-icon btn-delete");
+            private final javafx.scene.control.Button upBtn = createIconButton(FontAwesomeIcons.CHEVRON_UP, "btn-icon btn-reorder");
+            private final javafx.scene.control.Button downBtn = createIconButton(FontAwesomeIcons.CHEVRON_DOWN, "btn-icon btn-reorder");
+            private final javafx.scene.control.Button deleteBtn = createIconButton(FontAwesomeIcons.TRASH, "btn-icon btn-delete");
+            private final HBox box = new HBox(6, upBtn, downBtn, deleteBtn);
+            private final Tooltip upTooltip = new Tooltip("Move up");
+            private final Tooltip downTooltip = new Tooltip("Move down");
+            private final Tooltip deleteTooltip = new Tooltip("Remove from routine");
 
             {
+                box.setAlignment(Pos.CENTER_LEFT);
+                Tooltip.install(upBtn, upTooltip);
+                Tooltip.install(downBtn, downTooltip);
+                Tooltip.install(deleteBtn, deleteTooltip);
+
+                upBtn.setOnAction(e -> {
+                    RoutineExercise re = getTableView().getItems().get(getIndex());
+                    if (re != null) {
+                        moveExercise(re, -1);
+                    }
+                    e.consume();
+                });
+
+                downBtn.setOnAction(e -> {
+                    RoutineExercise re = getTableView().getItems().get(getIndex());
+                    if (re != null) {
+                        moveExercise(re, 1);
+                    }
+                    e.consume();
+                });
+
                 deleteBtn.setOnAction(e -> {
                     RoutineExercise re = getTableView().getItems().get(getIndex());
+                    if (re == null) {
+                        return;
+                    }
+                    DayOfWeek day = re.getDayOfWeek();
                     try {
                         if (routineExerciseDAO.delete(re.getId())) {
                             routineExercises.remove(re);
+                            applyOrderForDay(day);
                             filterTableByDay(); // Refresh filtered list
                         }
                     } catch (Exception ex) {
@@ -301,13 +478,144 @@ private void setupExerciseTable() {
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    setGraphic(deleteBtn);
+                    setGraphic(box);
                 }
             }
         });
 
         exerciseTable.getColumns().addAll(exerciseCol, dayCol, setsCol, repsTimeCol, actionsCol);
         exerciseTable.setPlaceholder(new Label("No exercises assigned yet"));
+    }
+
+    private ComboBox<Exercise> createExerciseCombo() {
+        ComboBox<Exercise> comboBox = new ComboBox<>(exercises);
+        comboBox.setPrefWidth(180);
+        comboBox.getStyleClass().add("combo-box");
+        comboBox.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(Exercise value, boolean empty) {
+                super.updateItem(value, empty);
+                setText(empty || value == null ? null : value.getName());
+            }
+        });
+        comboBox.setButtonCell(new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(Exercise value, boolean empty) {
+                super.updateItem(value, empty);
+                setText(empty || value == null ? null : value.getName());
+            }
+        });
+        return comboBox;
+    }
+
+    private TextField createInlineTextField() {
+        TextField textField = new TextField();
+        textField.setStyle("-fx-background-color: #0f0f1a; -fx-border-color: #3a3a5a; -fx-border-radius: 4; -fx-background-radius: 4; -fx-text-fill: #e8e8f0; -fx-font-size: 13px; -fx-padding: 4 8; -fx-pref-width: 60px;");
+        return textField;
+    }
+
+    private Integer parsePositiveInt(String text) {
+        if (text == null) {
+            return null;
+        }
+        String normalized = text.trim().toLowerCase().replace("s", "").trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        try {
+            int value = Integer.parseInt(normalized);
+            return value > 0 ? value : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Busca la instancia completa del ejercicio en la lista cargada, ya que la que
+     * devuelve el DAO es un stub con solo id y nombre.
+     */
+    private Exercise findExercise(Exercise stub) {
+        if (stub == null) {
+            return null;
+        }
+        for (Exercise e : exercises) {
+            if (e.getId() != null && e.getId().equals(stub.getId())) {
+                return e;
+            }
+        }
+        return stub;
+    }
+
+    private void save(RoutineExercise re) {
+        try {
+            routineExerciseDAO.update(re);
+        } catch (Exception ex) {
+            // Handle error
+        }
+        exerciseTable.refresh();
+    }
+
+    /**
+     * Mueve un ejercicio una posicion hacia arriba o abajo dentro de su mismo dia.
+     */
+    private void moveExercise(RoutineExercise re, int delta) {
+        int from = routineExercises.indexOf(re);
+        if (from < 0) {
+            return;
+        }
+        int to = neighborIndex(from, delta);
+        if (to < 0) {
+            return;
+        }
+        RoutineExercise other = routineExercises.get(to);
+        routineExercises.set(from, other);
+        routineExercises.set(to, re);
+        applyOrderForDay(re.getDayOfWeek());
+        sortByDayAndOrder();
+        filterTableByDay();
+    }
+
+    /**
+     * Mantiene la lista en el mismo orden que devuelve la base: por dia y luego por orden.
+     */
+    private void sortByDayAndOrder() {
+        List<RoutineExercise> sorted = new ArrayList<>(routineExercises);
+        sorted.sort(Comparator
+                .comparingInt((RoutineExercise r) -> r.getDayOfWeek() != null ? r.getDayOfWeek().getIndex() : 0)
+                .thenComparingInt(r -> r.getOrderIndex() != null ? r.getOrderIndex() : 0));
+        routineExercises.setAll(sorted);
+    }
+
+    private int neighborIndex(int from, int delta) {
+        DayOfWeek day = routineExercises.get(from).getDayOfWeek();
+        for (int i = from + delta; i >= 0 && i < routineExercises.size(); i += delta) {
+            if (day.equals(routineExercises.get(i).getDayOfWeek())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Renumera de forma contigua el orden de los ejercicios de un dia y lo persiste.
+     */
+    private void applyOrderForDay(DayOfWeek day) {
+        if (day == null) {
+            return;
+        }
+        List<Long> ids = new ArrayList<>();
+        int index = 1;
+        for (RoutineExercise r : routineExercises) {
+            if (day.equals(r.getDayOfWeek())) {
+                r.setOrderIndex(index++);
+                ids.add(r.getId());
+            }
+        }
+        try {
+            routineExerciseDAO.saveOrder(routine.getId(), day, ids);
+        } catch (Exception ex) {
+            // Handle error
+        }
     }
 
     private void filterTableByDay() {

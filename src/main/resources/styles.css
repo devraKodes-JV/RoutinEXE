@@ -269,6 +269,22 @@
     -fx-text-fill: #ffb74d;
 }
 
+.btn-reorder {
+    -fx-background-color: #2a2a4a;
+    -fx-border-color: #3a3a5a;
+    -fx-text-fill: #ffffff;
+}
+
+.btn-reorder:hover {
+    -fx-background-color: #1e3a5f;
+    -fx-border-color: #42a5f5;
+    -fx-text-fill: #64b5f6;
+}
+
+.btn-reorder:hover > .label {
+    -fx-text-fill: #64b5f6;
+}
+
 .button-row {
     -fx-spacing: 12px;
     -fx-alignment: center-right;

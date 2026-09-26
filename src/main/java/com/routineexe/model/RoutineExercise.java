@@ -13,17 +13,23 @@ public class RoutineExercise {
     private DayOfWeek dayOfWeek;
     private Integer sets;
     private Integer reps;
+    private Integer orderIndex;
 
     public RoutineExercise() {
     }
 
     public RoutineExercise(Long id, Routine routine, Exercise exercise, DayOfWeek dayOfWeek, Integer sets, Integer reps) {
+        this(id, routine, exercise, dayOfWeek, sets, reps, null);
+    }
+
+    public RoutineExercise(Long id, Routine routine, Exercise exercise, DayOfWeek dayOfWeek, Integer sets, Integer reps, Integer orderIndex) {
         this.id = id;
         this.routine = routine;
         this.exercise = exercise;
         this.dayOfWeek = dayOfWeek;
         this.sets = sets;
         this.reps = reps;
+        this.orderIndex = orderIndex;
     }
 
     public Long getId() {
@@ -94,10 +100,23 @@ public class RoutineExercise {
         return Optional.ofNullable(reps);
     }
 
+    public Integer getOrderIndex() {
+        return orderIndex;
+    }
+
+    public void setOrderIndex(Integer orderIndex) {
+        this.orderIndex = orderIndex;
+    }
+
+    public Optional<Integer> getOrderIndexOptional() {
+        return Optional.ofNullable(orderIndex);
+    }
+
     @Override
     public String toString() {
-        return "RoutineExercise{id=" + id + ", routine=" + (routine != null ? routine.getName() : "null") 
-                + ", exercise=" + (exercise != null ? exercise.getName() : "null") 
-                + ", dayOfWeek=" + dayOfWeek + ", sets=" + sets + ", reps=" + reps + "}";
+        return "RoutineExercise{id=" + id + ", routine=" + (routine != null ? routine.getName() : "null")
+                + ", exercise=" + (exercise != null ? exercise.getName() : "null")
+                + ", dayOfWeek=" + dayOfWeek + ", sets=" + sets + ", reps=" + reps
+                + ", orderIndex=" + orderIndex + "}";
     }
 }

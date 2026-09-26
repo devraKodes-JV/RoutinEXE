@@ -179,6 +179,7 @@ public final class DatabaseHelper {
                 + "day_of_week INTEGER NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6), "
                 + "sets INTEGER NOT NULL, "
                 + "reps INTEGER NOT NULL, "
+                + "order_index INTEGER NOT NULL DEFAULT 0, "
                 + "FOREIGN KEY (routine_id) REFERENCES " + TABLE_ROUTINES + "(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (exercise_id) REFERENCES " + TABLE_EXERCISES + "(id) ON DELETE CASCADE"
                 + ")";
@@ -215,7 +216,37 @@ public final class DatabaseHelper {
             stmt.execute(routineExercisesSql);
             stmt.execute(sessionsSql);
             stmt.execute(sessionExercisesSql);
+
+            migrateSchema(stmt);
         }
+    }
+
+    /**
+     * Aplica las migraciones pendientes sobre bases de datos ya creadas.
+     * El proyecto solo usa CREATE TABLE IF NOT EXISTS, por lo que las columnas
+     * agregadas después de la creación original requieren un ALTER TABLE explícito.
+     */
+    private static void migrateSchema(Statement stmt) throws Exception {
+        if (!columnExists(stmt, TABLE_ROUTINE_EXERCISES, "order_index")) {
+            stmt.execute("ALTER TABLE " + TABLE_ROUTINE_EXERCISES
+                    + " ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0");
+            stmt.execute("UPDATE " + TABLE_ROUTINE_EXERCISES + " SET order_index = ("
+                    + "SELECT COUNT(*) FROM " + TABLE_ROUTINE_EXERCISES + " prev"
+                    + " WHERE prev.routine_id = " + TABLE_ROUTINE_EXERCISES + ".routine_id"
+                    + " AND prev.day_of_week = " + TABLE_ROUTINE_EXERCISES + ".day_of_week"
+                    + " AND prev.id <= " + TABLE_ROUTINE_EXERCISES + ".id)");
+        }
+    }
+
+    private static boolean columnExists(Statement stmt, String table, String column) throws Exception {
+        try (java.sql.ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + table + ")")) {
+            while (rs.next()) {
+                if (column.equalsIgnoreCase(rs.getString("name"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static String getUsersTableName() {
